@@ -103,7 +103,7 @@ DATABASES = {
         'NAME': 'enis_tp',
         'USER': 'root',
         'PASSWORD': 'Imen_Chaari2023',
-        'HOST': 'mysql-db',
+        'HOST': 'localhost',
         'PORT': 3306,
     }
 }
