@@ -62,7 +62,7 @@ resource "aws_key_pair" "deployer_key" {
 # Upload the private key to the S3 bucket
 
 resource "aws_s3_object" "private_key_object" {
-  bucket                  = "custom-terraform-state-bucket-5843cc53"  # Reference existing S3 bucket
+  bucket                  = "custom-terraform-state-bucket-942f47f5"  # Reference existing S3 bucket
   key                     = "${var.ssh_key_name}.pem"  # Use the same name as the key (with .pem extension)
   content                 = tls_private_key.example_ssh_key.private_key_pem
   acl                     = "private"
@@ -161,3 +161,31 @@ resource "aws_instance" "public_instance" {
     Name = "PublicInstance"
   }
 }
+# Create a DB subnet group
+resource "aws_db_subnet_group" "mydb_subnet_group" {
+  name       = "mydb_subnet_group"
+  subnet_ids = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
+  tags = {
+    Name = "mydb_subnet_group"
+  }
+}
+
+# Create an RDS MySQL database instance
+resource "aws_db_instance" "mydb" {
+  allocated_storage      = 20                # Minimum storage size for MySQL
+  engine                 = "mysql"
+  engine_version         = "8.0.35"             # Specify the MySQL engine version
+  instance_class         = "db.t3.micro"     # Free-tier eligible instance type
+  identifier = "mydb"
+  username               = "dbuser"          # Master username
+  password               = "DBpassword2024"  # Master password
+  db_subnet_group_name   = aws_db_subnet_group.mydb_subnet_group.name
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  publicly_accessible    = true             # Restrict public access
+  multi_az               = false             # Single-AZ deployment
+  skip_final_snapshot    = true              # Skip snapshot on deletion
+  tags = {
+    Name = "enis_tp"
+  }
+}
+

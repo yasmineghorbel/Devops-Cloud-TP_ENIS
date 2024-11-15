@@ -1,5 +1,5 @@
 [servers]
-3.208.34.116
+54.236.14.219
 [servers:vars]
 ansible_python_interpreter=/usr/bin/python3
 ansible_ssh_private_key_file=deployer_key.pem
