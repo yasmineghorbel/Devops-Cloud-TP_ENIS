@@ -1,5 +1,4 @@
 # network components
-
 resource "aws_vpc" "tp_cloud_devops_vpc" {
   cidr_block= var.vpc_cidr_block # Using variable for VPC CIDR
   enable_dns_support   = true
