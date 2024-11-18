@@ -73,6 +73,7 @@ pipeline {
             steps {
                 script {
                     dir('enis-app-tp/backend/backend') {
+                        // Verify the existence of settings.py
                         sh '''
                         if [ -f "settings.py" ]; then
                             echo "Found settings.py at $(pwd)"
@@ -82,19 +83,21 @@ pipeline {
                         fi
                         '''
 
+                        // Update the DB_HOST value in settings.py
+                        sh """
+                        sed -i "s|DB_HOST = .*|DB_HOST = '${RDS_ENDPOINT}'|g" settings.py
+                        """
+
+                        // Verify the DATABASES section after the update
                         sh '''
-                        sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' settings.py
+                        echo "DATABASES section of settings.py after update:"
+                        sed -n '/DATABASES = {/,/^}/p' settings.py
                         '''
-
-                       sh '''
-                       echo "DATABASES section of settings.py after update:"
-                       sed -n '/DATABASES = {/,/^}/p' settings.py
-                       '''
-
                     }
                 }
             }
         }
+
 
 
 //         stage('Clone Repository') {
