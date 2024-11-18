@@ -191,18 +191,19 @@ pipeline {
             steps {
                 script {
                     sh """
-                    # Ensure pip is upgraded
-                    python3 -m pip install --upgrade pip
+                    python3 -m pip install --upgrade pip --user
+                    pip install --user --upgrade ansible
 
-                    # Upgrade Ansible to the latest version
-                    pip install --user ansible==2.15.1
+                    # Ensure Ansible is in the PATH
+                    export PATH=~/.local/bin:$PATH
 
-                    # Verify the installation
+                    # Verify the installed version
                     ansible --version
                     """
                 }
             }
         }
+
 
         stage('Run Ansible Playbook') {
             steps {
