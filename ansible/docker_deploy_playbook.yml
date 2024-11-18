@@ -122,13 +122,13 @@
         reauthorize: yes
 
     - name: Pull frontend Docker image from ECR
-      docker_image:
+      community.docker.docker_image:
         name: "{{ ecr_url }}/{{ ecr_repository }}"
         tag: "{{ frontend_image_tag }}"
         source: pull
         force_source: yes
     - name: Pull backend Docker image from ECR
-      docker_image:
+      community.docker.docker_image:
         name: "{{ ecr_url }}/{{ ecr_repository }}"
         tag: "{{ backend_image_tag }}"
         source: pull
