@@ -76,7 +76,7 @@ pipeline {
 
                             // Update DB_HOST in settings.py using sed
                             sh """
-                            sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' settings.py
+                            sed -i 's|DB_HOST = .*|DB_HOST = \\"${RDS_ENDPOINT}\\"|g' settings.py
                             """
 
                             // Verify the updated contents of settings.py
@@ -85,6 +85,7 @@ pipeline {
                             cat settings.py
                             """
                         }
+
 
                      }
                  }
