@@ -105,7 +105,7 @@ pipeline {
                     steps {
                         script {
                             sh """
-                            mysql -h ${RDS_ENDPOINT} -P 3306 -u dbuser -pDBpassword2024 <<EOF
+                            mysql -h mydb.${RDS_ENDPOINT} -P 3306 -u dbuser -pDBpassword2024 <<EOF
                             CREATE DATABASE IF NOT EXISTS enis_tp;
                             SHOW DATABASES;
                             EXIT;
