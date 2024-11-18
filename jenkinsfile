@@ -48,43 +48,44 @@ pipeline {
                          echo "RDS Endpoint: ${RDS_ENDPOINT}"
                          echo "Deployer Key URI: ${DEPLOYER_KEY_URI}"
 
-                         // Navigate to the correct directory and update the config.js file
-                         dir('enis-app-tp/frontend/src') {
-                             // Write the updated content to config.js
-                             writeFile file: 'config.js', text: """
-                             export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
-                             """
+                      // Navigate to the correct directory and update the config.js file
+                      dir('enis-app-tp/frontend/src') {
+                          // Write the updated content to config.js
+                          writeFile file: 'config.js', text: """
+                          export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
+                          """
 
-                             // Verify the updated contents of config.js
-                             sh """
-                             echo "Contents of config.js after update:"
-                             cat config.js
-                             """
-                         }
+                          // Verify the updated contents of config.js
+                          sh '''
+                          echo "Contents of config.js after update:"
+                          cat config.js
+                          '''
+                      }
 
-                        // Navigate to the correct directory and update the settings.py file
-                        dir('enis-app-tp/backend/backend') {
-                            // Ensure the file exists before proceeding
-                            sh """
-                            if [ -f "settings.py" ]; then
-                                echo "Found settings.py at $(pwd)"
-                            else
-                                echo "settings.py not found in $(pwd)!"
-                                exit 1
-                            fi
-                            """
+                      // Navigate to the correct directory and update the settings.py file
+                      dir('enis-app-tp/backend/backend') {
+                          // Ensure the file exists before proceeding
+                          sh '''
+                          if [ -f "settings.py" ]; then
+                              echo "Found settings.py at $(pwd)"
+                          else
+                              echo "settings.py not found in $(pwd)!"
+                              exit 1
+                          fi
+                          '''
 
-                            // Update DB_HOST in settings.py using sed
-                            sh """
-                            sed -i 's|DB_HOST = .*|DB_HOST = \\"${RDS_ENDPOINT}\\"|g' settings.py
-                            """
+                          // Update DB_HOST in settings.py using sed
+                          sh '''
+                          sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' settings.py
+                          '''
 
-                            // Verify the updated contents of settings.py
-                            sh """
-                            echo "Contents of settings.py after update:"
-                            cat settings.py
-                            """
-                        }
+                          // Verify the updated contents of settings.py
+                          sh '''
+                          echo "Contents of settings.py after update:"
+                          cat settings.py
+                          '''
+                      }
+
 
 
                      }
