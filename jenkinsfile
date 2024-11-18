@@ -187,22 +187,16 @@ pipeline {
                 }
             }
         }
-        stage('Upgrade Ansible') {
+        stage('Setup Ansible') {
             steps {
-                script {
-                    sh """
-                    python3 -m pip install --upgrade pip --user
-                    pip install --user --upgrade ansible
-
-                    # Ensure Ansible is in the PATH
-                    export PATH=~/.local/bin:$PATH
-
-                    # Verify the installed version
-                    ansible --version
-                    """
-                }
+                sh """
+                python3 -m pip install --upgrade pip
+                python3 -m pip install --user ansible==2.15.1
+                ansible-galaxy collection install community.docker --force
+                """
             }
         }
+
 
 
         stage('Run Ansible Playbook') {
