@@ -48,34 +48,43 @@ pipeline {
                          echo "RDS Endpoint: ${RDS_ENDPOINT}"
                          echo "Deployer Key URI: ${DEPLOYER_KEY_URI}"
 
-                         // Update config.js with EC2 Public IP
-                         writeFile file: 'enis-app-tp/frontend/src/config.js', text: """
-                         export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
-                         """
+                         // Navigate to the correct directory and update the config.js file
+                         dir('enis-app-tp/frontend/src') {
+                             // Write the updated content to config.js
+                             writeFile file: 'config.js', text: """
+                             export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
+                             """
 
-                        // Verify that the file was updated correctly
-                        sh """
-                        echo "Contents of config.js after update:"
-                        cat enis-app-tp/frontend/src/config.js
-                        """
-                        // Print directory structure for debugging
-                         sh "pwd"
-                         sh "ls -R"
+                             // Verify the updated contents of config.js
+                             sh """
+                             echo "Contents of config.js after update:"
+                             cat config.js
+                             """
+                         }
+                        // Navigate to the correct directory and update the settings.py file
+                        dir('enis-app-tp/backend/backend') {
+                            // Ensure the file exists before proceeding
+                            sh """
+                            if [ -f "settings.py" ]; then
+                                echo "Found settings.py at $(pwd)"
+                            else
+                                echo "settings.py not found in $(pwd)!"
+                                exit 1
+                            fi
+                            """
 
-                         // Update settings.py with the RDS endpoint
-                         sh """
-                         if [ ! -f enis-app-tp/backend/backend/settings.py ]; then
-                             echo "settings.py not found!";
-                             exit 1;
-                         fi
-                         sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
-                         """
-//                          // Replace DB_HOST in settings.py
-//                          sh """
-//                          sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
-//                          """
+                            // Update DB_HOST in settings.py using sed
+                            sh """
+                            sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' settings.py
+                            """
 
-                         echo "Updated configuration files successfully!"
+                            // Verify the updated contents of settings.py
+                            sh """
+                            echo "Contents of settings.py after update:"
+                            cat settings.py
+                            """
+                        }
+
                      }
                  }
              }
