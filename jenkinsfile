@@ -7,19 +7,11 @@ pipeline {
             ECR_REPO_URL = '682033493357.dkr.ecr.us-east-1.amazonaws.com'
             ECR_REPO_NAME = 'test'
             IMAGE_REPO = "${ECR_REPO_URL}/${ECR_REPO_NAME}"
-            REGION="us-east-1"
+            AWS_REGION = "us-east-1"
 
         }
     stages {
-    stage('Debug Environment') {
-        steps {
-            script {
-                sh 'env | grep AWS'
-            }
-        }
-    }
-
-        stage('Provision Server and Database') {
+         stage('Provision Server and Database') {
             steps {
                 script {
                     dir('my-terraform-project/remote_backend') {
