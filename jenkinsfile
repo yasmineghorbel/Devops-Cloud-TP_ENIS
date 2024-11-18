@@ -172,15 +172,14 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        // Update the second line with the EC2_PUBLIC_IP variable
                         sh """
                         if [ -f "hosts" ]; then
-                            echo "Found hosts file at $(pwd)"
+                            echo "Found hosts file at \$(pwd)"
                             sed -i "2s|.*|${EC2_PUBLIC_IP}|" hosts
                             echo "Updated hosts file:"
                             cat hosts
                         else
-                            echo "hosts file not found in $(pwd)!"
+                            echo "hosts file not found in \$(pwd)!"
                             exit 1
                         fi
                         """
@@ -188,6 +187,7 @@ pipeline {
                 }
             }
         }
+
 
 
 
