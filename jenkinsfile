@@ -53,7 +53,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the repository...'
-                git url: 'https://github.com/ReDXTechnologies/Devops-Cloud-TP_ENIS', branch: 'final'
+                git url: 'https://github.com/ReDXTechnologies/Devops-Cloud-TP_ENIS.git', branch: 'final'
             }
         }
         stage('Build Frontend Docker Image') {
