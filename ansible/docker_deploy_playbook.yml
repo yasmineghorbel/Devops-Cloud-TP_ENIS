@@ -115,20 +115,20 @@
     - ansible-vars.yaml
   tasks:
     - name: Log in to Amazon ECR
-      community.docker.docker_login:
+      docker_login:
         registry_url: "{{ ecr_url }}"
         username: AWS
         password: "{{ lookup('pipe', 'aws ecr get-login-password --region ' + region) }}"
         reauthorize: yes
 
     - name: Pull frontend Docker image from ECR
-      community.docker.docker_image:
+      docker_image:
         name: "{{ ecr_url }}/{{ ecr_repository }}"
         tag: "{{ frontend_image_tag }}"
         source: pull
         force_source: yes
     - name: Pull backend Docker image from ECR
-      community.docker.docker_image:
+      docker_image:
         name: "{{ ecr_url }}/{{ ecr_repository }}"
         tag: "{{ backend_image_tag }}"
         source: pull
@@ -149,7 +149,7 @@
 
   tasks:
     - name: Create Docker Network
-      community.docker.docker_network:
+      docker_network:
         name: "{{ docker_network_name }}"
         state: present
 

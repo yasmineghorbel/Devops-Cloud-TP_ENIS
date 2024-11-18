@@ -187,6 +187,23 @@ pipeline {
                 }
             }
         }
+        stage('Upgrade Ansible') {
+            steps {
+                script {
+                    sh """
+                    # Ensure pip is upgraded
+                    python3 -m pip install --upgrade pip
+
+                    # Upgrade Ansible to the latest version
+                    pip install --user ansible==2.15.1
+
+                    # Verify the installation
+                    ansible --version
+                    """
+                }
+            }
+        }
+
         stage('Run Ansible Playbook') {
             steps {
                 script {
@@ -194,9 +211,6 @@ pipeline {
                         sh """
                         if [ -f "docker_deploy_playbook.yml" ]; then
                             echo "Found playbook docker_deploy_playbook.yml"
-
-                            # Ensure community.docker collection is installed
-                            ansible-galaxy collection install community.docker --force
 
                             # Run the Ansible playbook
                             ansible-playbook -i hosts docker_deploy_playbook.yml
