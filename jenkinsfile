@@ -122,8 +122,10 @@ pipeline {
                 }
         stage('Login to AWS ECR') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'cd16bc80-8a23-4622-8c73-cf38e0e139d9']]) {
-                    sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 682033493357.dkr.ecr.us-east-1.amazonaws.com'
+                script {
+                    sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URL}
+                    """
                 }
             }
         }
@@ -148,26 +150,26 @@ pipeline {
         stage('Download SSH Key from S3') {
             steps {
                 script {
+                    dir('ansible') {
                         sh """
-                        aws s3 cp s3://${DEPLOYER_KEY_URI}
+                        # Check and delete the existing key if it exists
+                        if [ -f "deployer_key.pem" ]; then
+                            echo "Deleting existing deployer_key.pem"
+                            rm deployer_key.pem
+                        fi
+
+                        # Download the SSH key from S3
+                        aws s3 cp ${DEPLOYER_KEY_URI} deployer_key.pem
+
                         # Set the proper permissions for the private key
-                        chmod 600 ${WORKSPACE}/${KEY_NAME}
+                        chmod 600 deployer_key.pem
                         """
+                    }
                 }
             }
         }
-        stage('Move Key to Ansible Directory') {
-            steps {
-                script {
-                    sh """
-                    # Ensure the Ansible keys directory exists
-                    mkdir -p ansible/keys
-                    # Move the downloaded key to the Ansible directory
-                    mv ${WORKSPACE}/${KEY_NAME} ${ANSIBLE_KEY_PATH}
-                    """
-                }
-            }
-        }
+
+
     }
 }
 
