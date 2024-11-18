@@ -28,11 +28,17 @@ pipeline {
                         // Apply Terraform configuration
                         sh "terraform apply -lock=false --auto-approve"
 
-                        // Capture EC2 Public IP
-                        def EC2_PUBLIC_IP = sh(script: "terraform output -raw instance_details | jq -r .instance_public_ip", returnStdout: true).trim()
+                        // Get EC2 Public IP
+                        def EC2_PUBLIC_IP = sh(
+                            script: "terraform output instance_details | grep 'instance_public_ip' | awk '{print $3}' | tr -d '\"'",
+                            returnStdout: true
+                        ).trim()
 
-                        // Capture RDS Endpoint
-                        def RDS_ENDPOINT = sh(script: "terraform output -raw rds_endpoint | jq -r .endpoint", returnStdout: true).trim()
+                        // Get RDS Endpoint
+                        def RDS_ENDPOINT = sh(
+                            script: "terraform output rds_endpoint | grep 'endpoint' | awk '{print $3}' | tr -d '\"'",
+                            returnStdout: true
+                        ).trim()
 
                         // Debugging: Print captured values
                         echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
@@ -102,6 +108,29 @@ pipeline {
                     echo 'Tagging and pushing Backend Image...'
                     sh "docker tag backend-app:latest $REPOSITORY_BACKEND"
                     sh "docker push $REPOSITORY_BACKEND"
+                }
+            }
+        }
+        stage('Download SSH Key from S3') {
+            steps {
+                script {
+                        sh """
+                        aws s3 cp s3://${S3_BUCKET_NAME}/${KEY_NAME} ${WORKSPACE}/${KEY_NAME}
+                        # Set the proper permissions for the private key
+                        chmod 600 ${WORKSPACE}/${KEY_NAME}
+                        """
+                }
+            }
+        }
+        stage('Move Key to Ansible Directory') {
+            steps {
+                script {
+                    sh """
+                    # Ensure the Ansible keys directory exists
+                    mkdir -p ansible/keys
+                    # Move the downloaded key to the Ansible directory
+                    mv ${WORKSPACE}/${KEY_NAME} ${ANSIBLE_KEY_PATH}
+                    """
                 }
             }
         }
