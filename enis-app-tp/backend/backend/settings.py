@@ -100,16 +100,6 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'enis_tp',
-#         'USER': 'root',
-#         'PASSWORD': 'Imen_Chaari2023',
-#         'HOST': 'mysql-db',
-#         'PORT': 3306,
-#     }
-# }
 
 DATABASES = {
     'default': {
