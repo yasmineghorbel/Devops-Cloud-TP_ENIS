@@ -12,52 +12,52 @@ pipeline {
         }
     stages {
          stage('Provision Server and Database') {
-            steps {
-                script {
-                    dir('my-terraform-project/remote_backend') {
-                        sh "terraform init"
-                        // Apply Terraform configuration
-                        sh "terraform apply --auto-approve"
-                    }
-                    dir('my-terraform-project') {
-                        // Initialize Terraform
-                        sh "terraform init"
-                        sh "terraform plan -lock=false"
+             steps {
+                 script {
+                     dir('my-terraform-project/remote_backend') {
+                         sh "terraform init"
+                         // Apply Terraform configuration
+                         sh "terraform apply --auto-approve"
+                     }
+                     dir('my-terraform-project') {
+                         // Initialize Terraform
+                         sh "terraform init"
+                         sh "terraform plan -lock=false"
 
+                         // Apply Terraform configuration
+                         sh "terraform apply -lock=false --auto-approve"
 
-                        // Apply Terraform configuration
-                        sh "terraform apply -lock=false --auto-approve"
+                         // Get EC2 Public IP
+                         def EC2_PUBLIC_IP = sh(
+                             script: 'terraform output instance_details | grep "instance_public_ip" | awk \'{print $3}\' | tr -d \'"\'',
+                             returnStdout: true
+                         ).trim()
 
-                        // Get EC2 Public IP
-                        def EC2_PUBLIC_IP = sh(
-                            script: "terraform output instance_details | grep 'instance_public_ip' | awk '{print $3}' | tr -d '\"'",
-                            returnStdout: true
-                        ).trim()
+                         // Get RDS Endpoint
+                         def RDS_ENDPOINT = sh(
+                             script: 'terraform output rds_endpoint | grep "endpoint" | awk \'{print $3}\' | tr -d \'"\'',
+                             returnStdout: true
+                         ).trim()
 
-                        // Get RDS Endpoint
-                        def RDS_ENDPOINT = sh(
-                            script: "terraform output rds_endpoint | grep 'endpoint' | awk '{print $3}' | tr -d '\"'",
-                            returnStdout: true
-                        ).trim()
+                         // Debugging: Print captured values
+                         echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
+                         echo "RDS Endpoint: ${RDS_ENDPOINT}"
 
-                        // Debugging: Print captured values
-                        echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
-                        echo "RDS Endpoint: ${RDS_ENDPOINT}"
+                         // Update config.js with EC2 Public IP
+                         writeFile file: 'frontend/src/config.js', text: """
+                         export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
+                         """
+                         // Replace DB_HOST in settings.py
+                         sh """
+                         sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
+                         """
 
-                        // Update config.js with EC2 Public IP
-                        writeFile file: 'frontend/src/config.js', text: """
-                        export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
-                        """
-                        // Replace DB_HOST in settings.py
-                        sh """
-                        sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
-                        """
+                         echo "Updated configuration files successfully!"
+                     }
+                 }
+             }
+         }
 
-                        echo "Updated configuration files successfully!"
-                    }
-                }
-            }
-        }
 //         stage('Clone Repository') {
 //             steps {
 //                 echo 'Cloning the repository...'
