@@ -22,9 +22,11 @@ pipeline {
                     dir('my-terraform-project') {
                         // Initialize Terraform
                         sh "terraform init"
+                        sh "terraform plan -lock=false"
+
 
                         // Apply Terraform configuration
-                        sh "terraform apply --auto-approve"
+                        sh "terraform apply -lock=false --auto-approve"
 
                         // Capture EC2 Public IP
                         def EC2_PUBLIC_IP = sh(script: "terraform output -raw instance_details | jq -r .instance_public_ip", returnStdout: true).trim()
