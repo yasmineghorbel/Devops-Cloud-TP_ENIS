@@ -159,7 +159,7 @@
         dest: "{{ compose_remote_path }}"
 
     - name: Start Docker containers from Docker Compose
-      docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "{{ project_src_path }}"
         state: present  # "present" is equivalent to "docker-compose up", "absent" would stop the containers.
 
