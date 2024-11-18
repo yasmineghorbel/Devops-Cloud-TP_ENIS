@@ -187,15 +187,17 @@ pipeline {
                 }
             }
         }
-        stage('Setup Ansible') {
+        stage('Check Ansible Version') {
             steps {
-                sh """
-                python3 -m pip install --upgrade pip
-                python3 -m pip install --user ansible==2.15.1
-                ansible-galaxy collection install community.docker --force
-                """
+                script {
+                    sh """
+                    echo "Printing the current Ansible version:"
+                    ansible --version
+                    """
+                }
             }
         }
+
 
 
 
