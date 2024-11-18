@@ -10,6 +10,8 @@ pipeline {
             ECR_REPO_URL = '682033493357.dkr.ecr.us-east-1.amazonaws.com'
             ECR_REPO_NAME = 'test'
             IMAGE_REPO = "${ECR_REPO_URL}/${ECR_REPO_NAME}"
+            IMAGE_REPO_FRONTEND = "${IMAGE_REPO}:frontend-1.0"
+            IMAGE_REPO_BACKEND = "${IMAGE_REPO}:backend-1.0"
             AWS_REGION = "us-east-1"
 
         }
@@ -82,12 +84,10 @@ pipeline {
                             exit 1
                         fi
                         '''
-
                         // Update the HOST in the DATABASES section
                         sh """
                         sed -i "/'HOST':/c\\        'HOST': '${RDS_ENDPOINT}'," settings.py
                         """
-
                         // Verify the DATABASES section after the update
                         sh '''
                         echo "DATABASES section of settings.py after update:"
@@ -98,18 +98,9 @@ pipeline {
             }
         }
 
-
-
-
-//         stage('Clone Repository') {
-//             steps {
-//                 echo 'Cloning the repository...'
-//                 git url: 'https://github.com/ReDXTechnologies/Devops-Cloud-TP_ENIS.git', branch: 'final'
-//             }
-//         }
         stage('Build Frontend Docker Image') {
                     steps {
-                        dir('frontend') {
+                        dir('enis-app-tp/frontend') {
                             script {
                                 echo 'Building Frontend Docker Image...'
                                 def frontendImage = docker.build('frontend-app')
@@ -120,7 +111,7 @@ pipeline {
                 }
         stage('Build Backend Docker Image') {
                     steps {
-                        dir('backend') {
+                        dir('enis-app-tp/backend') {
                             script {
                                 echo 'Building Backend Docker Image...'
                                 def backendImage = docker.build('backend-app')
@@ -140,8 +131,8 @@ pipeline {
                     steps {
                         script {
                             echo 'Tagging and pushing Frontend Image...'
-                            sh "docker tag frontend-app:latest $REPOSITORY_FRONTEND"
-                            sh "docker push $REPOSITORY_FRONTEND"
+                            sh "docker tag frontend-app:latest $IMAGE_REPO_FRONTEND"
+                            sh "docker push $IMAGE_REPO_FRONTEND"
                         }
                     }
                 }
@@ -149,8 +140,8 @@ pipeline {
             steps {
                 script {
                     echo 'Tagging and pushing Backend Image...'
-                    sh "docker tag backend-app:latest $REPOSITORY_BACKEND"
-                    sh "docker push $REPOSITORY_BACKEND"
+                    sh "docker tag backend-app:latest $IMAGE_REPO_BACKEND"
+                    sh "docker push $IMAGE_REPO_BACKEND"
                 }
             }
         }
@@ -158,7 +149,7 @@ pipeline {
             steps {
                 script {
                         sh """
-                        aws s3 cp s3://${S3_BUCKET_NAME}/${KEY_NAME} ${WORKSPACE}/${KEY_NAME}
+                        aws s3 cp s3://${DEPLOYER_KEY_URI}
                         # Set the proper permissions for the private key
                         chmod 600 ${WORKSPACE}/${KEY_NAME}
                         """
