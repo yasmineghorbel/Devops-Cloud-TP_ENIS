@@ -61,6 +61,7 @@ pipeline {
                              cat config.js
                              """
                          }
+
                         // Navigate to the correct directory and update the settings.py file
                         dir('enis-app-tp/backend/backend') {
                             // Ensure the file exists before proceeding
