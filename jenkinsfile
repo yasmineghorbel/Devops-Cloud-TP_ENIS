@@ -11,6 +11,14 @@ pipeline {
 
         }
     stages {
+    stage('Debug Environment') {
+        steps {
+            script {
+                sh 'env | grep AWS'
+            }
+        }
+    }
+
         stage('Provision Server and Database') {
             steps {
                 script {
