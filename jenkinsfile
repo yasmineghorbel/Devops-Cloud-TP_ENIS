@@ -42,7 +42,7 @@ pipeline {
                          // Get RDS Endpoint
                          RDS_ENDPOINT = sh(
                              script: '''
-                             terraform output rds_endpoint | grep "endpoint" | awk -F'=' '{print $2}' | tr -d '[:space:]"' | sed 's/:3306//'
+                             terraform output rds_endpoint | grep "endpoint" | awk -F'=' '{print $2}' | tr -d '[:space:]"' | sed 's/mydb\\.//;s/:3306//'
                              ''',
                              returnStdout: true
                          ).trim()
