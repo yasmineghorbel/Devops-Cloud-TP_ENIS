@@ -38,19 +38,42 @@ pipeline {
                              script: 'terraform output rds_endpoint | grep "endpoint" | awk \'{print $3}\' | tr -d \'"\'',
                              returnStdout: true
                          ).trim()
+                        def DEPLOYER_KEY_URI = sh(
+                             script: 'terraform output deployer_key_s3_uri | tr -d \'"\'',
+                             returnStdout: true
+                         ).trim()
 
                          // Debugging: Print captured values
                          echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
                          echo "RDS Endpoint: ${RDS_ENDPOINT}"
+                         echo "Deployer Key URI: ${DEPLOYER_KEY_URI}"
 
                          // Update config.js with EC2 Public IP
-                         writeFile file: 'frontend/src/config.js', text: """
+                         writeFile file: 'enis-app-tp/frontend/src/config.js', text: """
                          export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
                          """
-                         // Replace DB_HOST in settings.py
+
+                        // Verify that the file was updated correctly
+                        sh """
+                        echo "Contents of config.js after update:"
+                        cat enis-app-tp/frontend/src/config.js
+                        """
+                        // Print directory structure for debugging
+                         sh "pwd"
+                         sh "ls -R"
+
+                         // Update settings.py with the RDS endpoint
                          sh """
+                         if [ ! -f enis-app-tp/backend/backend/settings.py ]; then
+                             echo "settings.py not found!";
+                             exit 1;
+                         fi
                          sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
                          """
+//                          // Replace DB_HOST in settings.py
+//                          sh """
+//                          sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
+//                          """
 
                          echo "Updated configuration files successfully!"
                      }
