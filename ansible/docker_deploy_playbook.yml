@@ -161,13 +161,13 @@
 
     - name: Start Docker containers from Docker Compose
       shell: |
-        docker compose -f "{{ compose_remote_path }}" up -d
+        docker-compose up -d
       args:
         chdir: "{{ project_src_path }}"
 
 
 #    - name: Start Docker containers from Docker Compose
-#      community.docker.docker_compose_v2:
+#      docker_compose:
 #        project_src: "{{ project_src_path }}"
 #        state: present  # "present" is equivalent to "docker-compose up", "absent" would stop the containers.
 
