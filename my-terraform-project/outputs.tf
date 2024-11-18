@@ -9,3 +9,11 @@ output "instance_details" {
     subnet_id            = aws_instance.public_instance.subnet_id
   }
 }
+output "rds_endpoint" {
+  description = "The endpoint of the RDS database"
+  value = {
+    endpoint        = aws_db_instance.mydb.endpoint
+    username        = aws_db_instance.mydb.username
+    db_instance_id  = aws_db_instance.mydb.id
+  }
+}

@@ -1,0 +1,110 @@
+pipeline {
+    agent any
+    environment {
+            AWS_ACCESS_KEY_ID = credentials('jenkins_aws_access_key_id')
+            AWS_SECRET_ACCESS_KEY = credentials('jenkins_aws_secret_access_key')
+            AWS_CREDENTIALS_ID = 'aws-credentials'
+            ECR_REPO_URL = '682033493357.dkr.ecr.us-east-1.amazonaws.com'
+            ECR_REPO_NAME = 'test'
+            IMAGE_REPO = "${ECR_REPO_URL}/${ECR_REPO_NAME}"
+            REGION="us-east-1"
+
+        }
+    stages {
+        stage('Provision Server and Database') {
+            steps {
+                script {
+                    dir('my-terraform-project/remote-backend') {
+                        sh "terraform init"
+                        // Apply Terraform configuration
+                        sh "terraform apply --auto-approve"
+                    }
+                    dir('my-terraform-project') {
+                        // Initialize Terraform
+                        sh "terraform init"
+
+                        // Apply Terraform configuration
+                        sh "terraform apply --auto-approve"
+
+                        // Capture EC2 Public IP
+                        def EC2_PUBLIC_IP = sh(script: "terraform output -raw instance_details | jq -r .instance_public_ip", returnStdout: true).trim()
+
+                        // Capture RDS Endpoint
+                        def RDS_ENDPOINT = sh(script: "terraform output -raw rds_endpoint | jq -r .endpoint", returnStdout: true).trim()
+
+                        // Debugging: Print captured values
+                        echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
+                        echo "RDS Endpoint: ${RDS_ENDPOINT}"
+
+                        // Update config.js with EC2 Public IP
+                        writeFile file: 'frontend/src/config.js', text: """
+                        export const API_BASE_URL = 'http://${EC2_PUBLIC_IP}:8000';
+                        """
+                        // Replace DB_HOST in settings.py
+                        sh """
+                        sed -i 's|DB_HOST = .*|DB_HOST = "${RDS_ENDPOINT}"|g' enis-app-tp/backend/backend/settings.py
+                        """
+
+                        echo "Updated configuration files successfully!"
+                    }
+                }
+            }
+        }
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning the repository...'
+                git url: 'https://github.com/ReDXTechnologies/Devops-Cloud-TP_ENIS', branch: 'main'
+            }
+        }
+        stage('Build Frontend Docker Image') {
+                    steps {
+                        dir('frontend') {
+                            script {
+                                echo 'Building Frontend Docker Image...'
+                                def frontendImage = docker.build('frontend-app')
+                                echo "Built Image: ${frontendImage.id}"
+                            }
+                        }
+                    }
+                }
+        stage('Build Backend Docker Image') {
+                    steps {
+                        dir('backend') {
+                            script {
+                                echo 'Building Backend Docker Image...'
+                                def backendImage = docker.build('backend-app')
+                                echo "Built Image: ${backendImage.id}"
+                            }
+                        }
+                    }
+                }
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'cd16bc80-8a23-4622-8c73-cf38e0e139d9']]) {
+                    sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 682033493357.dkr.ecr.us-east-1.amazonaws.com'
+                }
+            }
+        }
+         stage('Tag and Push Frontend Image') {
+                    steps {
+                        script {
+                            echo 'Tagging and pushing Frontend Image...'
+                            sh "docker tag frontend-app:latest $REPOSITORY_FRONTEND"
+                            sh "docker push $REPOSITORY_FRONTEND"
+                        }
+                    }
+                }
+        stage('Tag and Push Backend Image') {
+            steps {
+                script {
+                    echo 'Tagging and pushing Backend Image...'
+                    sh "docker tag backend-app:latest $REPOSITORY_BACKEND"
+                    sh "docker push $REPOSITORY_BACKEND"
+                }
+            }
+        }
+    }
+}
+
+
+
