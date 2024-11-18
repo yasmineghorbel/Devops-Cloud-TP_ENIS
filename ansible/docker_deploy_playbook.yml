@@ -149,7 +149,7 @@
 
   tasks:
     - name: Create Docker Network
-      docker_network:
+      community.docker.docker_network:
         name: "{{ docker_network_name }}"
         state: present
 
