@@ -246,14 +246,14 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        sh """
+                        sh '''
                         echo "Checking if the 'my_ansible_container' is already running or exists"
 
                         CONTAINER_NAME="my_ansible_container"
                         IMAGE_NAME="cytopia/ansible"
 
                         # Check if the container exists
-                        if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}\$"; then
+                        if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
                             echo "Container ${CONTAINER_NAME} exists."
 
                             # Check if the container is stopped
@@ -274,7 +274,7 @@ pipeline {
 
                         echo "Verifying the ansible directory and its contents in the container:"
                         docker exec ${CONTAINER_NAME} sh -c "cd ansible && ls && cat hosts || echo 'Directory or file not found'"
-                        """
+                        '''
                     }
                 }
             }
@@ -283,7 +283,7 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        sh """
+                        sh '''
                         echo "Running Ansible playbook inside the container"
 
                         CONTAINER_NAME="my_ansible_container"
@@ -298,7 +298,7 @@ pipeline {
                             echo "Playbook ${PLAYBOOK} not found!"
                             exit 1
                         fi
-                        """
+                        '''
                     }
                 }
             }
