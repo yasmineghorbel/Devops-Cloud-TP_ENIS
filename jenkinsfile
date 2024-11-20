@@ -252,9 +252,6 @@ pipeline {
                         CONTAINER_NAME="my_ansible_container"
                         IMAGE_NAME="cytopia/ansible"
 
-                        # Get the sanitized working directory
-                        WORKSPACE_DIR=$(pwd | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
-
                         # Stop and remove the container if it exists
                         if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
                             echo "Container ${CONTAINER_NAME} exists. Stopping and removing it..."
@@ -265,7 +262,7 @@ pipeline {
                         # Create and start a new container with volume mounted
                         echo "Creating and starting a new container with the ansible directory mounted..."
                         docker run -dit --name ${CONTAINER_NAME} \
-                            -v ${WORKSPACE_DIR}:/ansible \
+                            -v $(pwd):/ansible \
                             -w /ansible \
                             ${IMAGE_NAME} \
                             sh -c 'while true; do sleep 30; done'
@@ -278,7 +275,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Run Ansible Playbook') {
             steps {
