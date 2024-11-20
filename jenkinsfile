@@ -275,6 +275,26 @@ pipeline {
                 }
             }
         }
+        stage('Install OpenSSH in Ansible Container') {
+                    steps {
+                        script {
+                            dir('ansible') {
+                                sh '''
+                                echo "Installing OpenSSH in the Ansible container"
+
+                                CONTAINER_NAME="my_ansible_container"
+
+                                # Install OpenSSH
+                                docker exec ${CONTAINER_NAME} sh -c "apk update && apk add openssh"
+
+                                # Verify OpenSSH installation
+                                echo "Verifying OpenSSH installation"
+                                docker exec ${CONTAINER_NAME} ssh -V || echo "OpenSSH not installed correctly"
+                                '''
+                            }
+                        }
+                    }
+                }
 
         stage('Run Ansible Playbook') {
             steps {
