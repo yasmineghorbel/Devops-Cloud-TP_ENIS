@@ -247,38 +247,35 @@ pipeline {
                 script {
                     dir('ansible') {
                         sh '''
-                        echo "Checking if the 'my_ansible_container' is already running or exists"
+                        echo "Checking and managing the 'my_ansible_container'"
 
                         CONTAINER_NAME="my_ansible_container"
                         IMAGE_NAME="cytopia/ansible"
 
-                        # Check if the container exists
+                        # Stop and remove the container if it exists
                         if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-                            echo "Container ${CONTAINER_NAME} exists."
-
-                            # Check if the container is stopped
-                            if [ "$(docker inspect -f '{{.State.Running}}' ${CONTAINER_NAME})" != "true" ]; then
-                                echo "Container ${CONTAINER_NAME} is stopped. Starting it..."
-                                docker start ${CONTAINER_NAME}
-                            else
-                                echo "Container ${CONTAINER_NAME} is already running."
-                            fi
-                        else
-                            echo "Container ${CONTAINER_NAME} does not exist. Creating and starting it..."
-                            docker run -dit --name ${CONTAINER_NAME} \
-                                -v $(pwd):/ansible \
-                                -w /ansible \
-                                ${IMAGE_NAME} \
-                                sh -c 'while true; do sleep 30; done'
+                            echo "Container ${CONTAINER_NAME} exists. Stopping and removing it..."
+                            docker stop ${CONTAINER_NAME} || true
+                            docker rm ${CONTAINER_NAME} || true
                         fi
 
+                        # Create and start a new container with volume mounted
+                        echo "Creating and starting a new container with the ansible directory mounted..."
+                        docker run -dit --name ${CONTAINER_NAME} \
+                            -v $(pwd):/ansible \
+                            -w /ansible \
+                            ${IMAGE_NAME} \
+                            sh -c 'while true; do sleep 30; done'
+
+                        # Verify the ansible directory and its contents in the container
                         echo "Verifying the ansible directory and its contents in the container:"
-                        docker exec ${CONTAINER_NAME} sh -c "cd ansible && ls && cat hosts || echo 'Directory or file not found'"
+                        docker exec ${CONTAINER_NAME} sh -c "ls /ansible && cat /ansible/hosts || echo 'Directory or file not found'"
                         '''
                     }
                 }
             }
         }
+
         stage('Run Ansible Playbook') {
             steps {
                 script {
