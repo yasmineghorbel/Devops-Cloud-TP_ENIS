@@ -152,24 +152,7 @@ resource "aws_security_group_rule" "allow_all_outbound" {
   protocol          = "-1"  # "-1" means all protocols
   cidr_blocks       = ["0.0.0.0/0"]
 }
-# Launch an EC2 instance in the public subnet with the generated key pair and security group
 
-resource "aws_instance" "public_instance" {
-  ami                    = var.ec2_ami_id
-  instance_type          = var.instance_type
-  subnet_id              = aws_subnet.public_subnet_1.id
-  key_name               = aws_key_pair.deployer_key.key_name
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
-  user_data     = <<-EOF
-                 #!/bin/bash
-                 echo "<h1>Hello, World</h1>" > index.html
-                 # Start a simple HTTP server on port 8080
-                 python3 -m http.server 8080 &
-                 EOF
-  tags = {
-    Name = "PublicInstance"
-  }
-}
 # Create a DB subnet group
 resource "aws_db_subnet_group" "mydb_subnet_group" {
   name       = "mydb_subnet_group"
@@ -198,3 +181,54 @@ resource "aws_db_instance" "mydb" {
   }
 }
 
+
+# IAM Role for EC2 to access ECR
+resource "aws_iam_role" "ec2_ecr_access_role" {
+  name = "ec2-ecr-access-role"
+
+  assume_role_policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# Attach AWS managed policy for ECR access
+resource "aws_iam_role_policy_attachment" "ec2_ecr_policy_attachment" {
+  role       = aws_iam_role.ec2_ecr_access_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
+# IAM Instance Profile
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "ec2-ecr-instance-profile"
+  role = aws_iam_role.ec2_ecr_access_role.name
+}
+
+# Modify your EC2 instance to include the IAM instance profile
+resource "aws_instance" "public_instance" {
+  ami                    = var.ec2_ami_id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public_subnet_1.id
+  key_name               = aws_key_pair.deployer_key.key_name
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_instance_profile.name
+
+  user_data = <<-EOF
+    #!/bin/bash
+    echo "<h1>Hello, World</h1>" > index.html
+    # Start a simple HTTP server on port 8080
+    python3 -m http.server 8080 &
+  EOF
+
+  tags = {
+    Name = "PublicInstance"
+  }
+}

@@ -205,13 +205,77 @@ pipeline {
                 }
             }
         }
-        stage('Check Ansible Version') {
+
+//  for linux users
+
+//         stage('Check Ansible Version') {
+//             steps {
+//                 script {
+//                     sh """
+//                     echo "Printing the current Ansible version:"
+//                     ansible --version
+//                     """
+//                 }
+//             }
+//         }
+//         stage('Run Ansible Playbook') {
+//             steps {
+//                 script {
+//                     dir('ansible') {
+//                         sh """
+//                         if [ -f "docker_deploy_playbook.yml" ]; then
+//                             echo "Found playbook docker_deploy_playbook.yml"
+//
+//                             # Run the Ansible playbook
+//                             ansible-playbook -i hosts docker_deploy_playbook.yml
+//                         else
+//                             echo "Playbook docker_deploy_playbook.yml not found!"
+//                             exit 1
+//                         fi
+//                         """
+//                     }
+//                 }
+//             }
+//         }
+
+
+//  for windows users
+
+
+        stage('Check and Manage Ansible Container') {
             steps {
                 script {
-                    sh """
-                    echo "Printing the current Ansible version:"
-                    ansible --version
-                    """
+                    dir('ansible') {
+                        sh """
+                        echo "Checking if the 'my_ansible_container' is already running or exists"
+
+                        CONTAINER_NAME="my_ansible_container"
+                        IMAGE_NAME="cytopia/ansible"
+
+                        # Check if the container exists
+                        if docker ps -a --format '{{.Names}}' | grep -q "^$CONTAINER_NAME\$"; then
+                            echo "Container $CONTAINER_NAME exists."
+
+                            # Check if the container is stopped
+                            if [ "$(docker inspect -f '{{.State.Running}}' $CONTAINER_NAME)" != "true" ]; then
+                                echo "Container $CONTAINER_NAME is stopped. Starting it..."
+                                docker start $CONTAINER_NAME
+                            else
+                                echo "Container $CONTAINER_NAME is already running."
+                            fi
+                        else
+                            echo "Container $CONTAINER_NAME does not exist. Creating and starting it..."
+                            docker run -dit --name $CONTAINER_NAME \
+                                -v $(pwd):/ansible \
+                                -w /ansible \
+                                $IMAGE_NAME \
+                                sh -c 'while true; do sleep 30; done'
+                        fi
+
+                        echo "Verifying the ansible directory and its contents in the container:"
+                        docker exec $CONTAINER_NAME sh -c "cd ansible && ls && cat hosts || echo 'Directory or file not found'"
+                        """
+                    }
                 }
             }
         }
@@ -220,13 +284,18 @@ pipeline {
                 script {
                     dir('ansible') {
                         sh """
-                        if [ -f "docker_deploy_playbook.yml" ]; then
-                            echo "Found playbook docker_deploy_playbook.yml"
+                        echo "Running Ansible playbook inside the container"
 
-                            # Run the Ansible playbook
-                            ansible-playbook -i hosts docker_deploy_playbook.yml
+                        CONTAINER_NAME="my_ansible_container"
+                        PLAYBOOK="docker_deploy_playbook.yml"
+                        INVENTORY="hosts"
+
+                        # Check if playbook exists
+                        if [ -f "$PLAYBOOK" ]; then
+                            echo "Playbook $PLAYBOOK found. Running it now..."
+                            docker exec $CONTAINER_NAME ansible-playbook -i $INVENTORY $PLAYBOOK
                         else
-                            echo "Playbook docker_deploy_playbook.yml not found!"
+                            echo "Playbook $PLAYBOOK not found!"
                             exit 1
                         fi
                         """
