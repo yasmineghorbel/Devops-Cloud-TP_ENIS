@@ -1,7 +1,7 @@
 ---
 - name: Basic Web Server Setup
   hosts: servers
-  gather_facts: False
+  gather_facts: false
   become: yes
 
   tasks:
@@ -11,10 +11,10 @@
         delay: 10
         timeout: 100
         search_regex: OpenSSH
-        host: '{{ ansible_host | default(inventory_hostname) }}'
+        host: "{{ ansible_host | default(inventory_hostname) }}"
       vars:
         ansible_connection: local
-      become: no
+        become: no
 
 - name: Install Docker and Docker-compose
   hosts: servers
@@ -33,15 +33,18 @@
         name: "{{ docker_package_name }}"
         update_cache: yes
         state: present
+
     - name: Install Docker-compose
       apt:
         name: docker-compose
         state: present
+
     - name: Ensure Docker service is started
       systemd:
         name: "{{ docker_service_name }}"
         state: started
         enabled: yes
+
     - name: Check Docker version
       command: docker --version
       register: docker_version_output
@@ -66,9 +69,11 @@
 
     - name: Reconnect to server session
       meta: reset_connection
+
 - name: Install AWS CLI on EC2 Instances
   hosts: servers
   become: yes
+
   tasks:
     - name: Ensure curl is installed
       package:
@@ -104,15 +109,16 @@
       command: "aws --version"
       register: aws_cli_version
 
-    - debug:
+    - name: Debug AWS CLI version
+      debug:
         msg: "AWS CLI version: {{ aws_cli_version.stdout }}"
-
 
 - name: Pull Docker image for the frontend from ECR to EC2 instance
   hosts: servers
   become: yes
   vars_files:
     - ansible-vars.yaml
+
   tasks:
     - name: Log in to Amazon ECR
       shell: |
@@ -120,32 +126,25 @@
       args:
         executable: /bin/bash
 
-#    - name: Log in to Amazon ECR
-#      docker_login:
-#        registry_url: "{{ ecr_url }}"
-#        username: AWS
-#        password: "{{ lookup('pipe', 'aws ecr get-login-password --region ' + region) }}"
-#        reauthorize: yes
-
     - name: Pull frontend Docker image from ECR
       docker_image:
         name: "{{ ecr_url }}/{{ ecr_repository }}"
         tag: "{{ frontend_image_tag }}"
         source: pull
-        force_source: yes
+
     - name: Pull backend Docker image from ECR
       docker_image:
         name: "{{ ecr_url }}/{{ ecr_repository }}"
         tag: "{{ backend_image_tag }}"
         source: pull
-        force_source: yes
+
     - name: Display Docker images on the host
       command: docker images
       register: docker_images_output
+
     - name: Show Docker images
       debug:
         msg: "{{ docker_images_output.stdout }}"
-
 
 - name: Start Docker containers
   hosts: servers
@@ -164,28 +163,16 @@
         src: "{{ compose_local_path }}"
         dest: "{{ compose_remote_path }}"
 
-
     - name: Start Docker containers from Docker Compose
-      shell: |
-        docker-compose up -d
-      args:
-        chdir: "{{ project_src_path }}"
-
-
-#    - name: Start Docker containers from Docker Compose
-#      docker_compose:
-#        project_src: "{{ project_src_path }}"
-#        state: present  # "present" is equivalent to "docker-compose up", "absent" would stop the containers.
+      docker_compose:
+        project_src: "{{ project_src_path }}"
+        state: present
 
     - name: Run makemigrations inside backend container
       command: docker exec {{ backend_container_name }} python manage.py makemigrations
 
     - name: Run migrate inside backend container
       command: docker exec {{ backend_container_name }} python manage.py migrate
+
     - name: Create superuser inside backend container
-      command: >
-        docker exec {{ backend_container_name }} python manage.py shell -c
-        "from django.contrib.auth import get_user_model;
-        User = get_user_model();
-        User.objects.filter(username='{{ superuser_username }}').exists() or
-        User.objects.create_superuser('{{ superuser_username }}', '{{ superuser_email }}', '{{ superuser_password }}')"
+      command: docker exec {{ backend_container_name }} python manage.py shell -c "from django.contrib.auth import get_user_model;User = get_user_model();User.objects.filter(username='{{ superuser_username }}').exists() or User.objects.create_superuser('{{ superuser_username }}', '{{ superuser_email }}', '{{ superuser_password }}')"

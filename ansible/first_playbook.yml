@@ -11,10 +11,10 @@
         delay: 10
         timeout: 100
         search_regex: OpenSSH
-        host: '{{ ansible_host | default(inventory_hostname) }}'
+        host: "{{ ansible_host | default(inventory_hostname) }}"
       vars:
         ansible_connection: local
-      become: no
+        become: no
 
     - name: Update apt cache manually
       apt:
@@ -25,6 +25,7 @@
       apt:
         name: nginx
         state: present
+
     - name: Start Nginx service
       service:
         name: nginx
@@ -36,4 +37,3 @@
         dest: /var/www/html/index.html
         content: "Hello from ansible "
         mode: '0644'
-

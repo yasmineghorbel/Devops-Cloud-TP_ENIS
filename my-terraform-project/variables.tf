@@ -1,4 +1,3 @@
-
 # VPC CIDR Block
 variable "vpc_cidr_block" {
   description = "The CIDR block for the VPC"
@@ -29,6 +28,7 @@ variable "availability_zone_2" {
   type        = string
   default     = "us-east-1b"
 }
+
 # SSH Key Name
 variable "ssh_key_name" {
   description = "The name of the SSH key pair to be created"
@@ -48,4 +48,3 @@ variable "ec2_ami_id" {
 #   default     = "ami-0ebfd941bbafe70c6" amazon linux
   default     = "ami-0866a3c8686eaeeba"
 }
-
