@@ -206,40 +206,40 @@ pipeline {
             }
         }
 
-// //  for linux users
+//  for linux users
 
-// //         stage('Check Ansible Version') {
-// //             steps {
-// //                 script {
-// //                     sh """
-// //                     echo "Printing the current Ansible version:"
-// //                     ansible --version
-// //                     """
-// //                 }
-// //             }
-// //         }
-// //         stage('Run Ansible Playbook') {
-// //             steps {
-// //                 script {
-// //                     dir('ansible') {
-// //                         sh """
-// //                         if [ -f "docker_deploy_playbook.yml" ]; then
-// //                             echo "Found playbook docker_deploy_playbook.yml"
-// //
-// //                             # Run the Ansible playbook
-// //                             ansible-playbook -i hosts docker_deploy_playbook.yml
-// //                         else
-// //                             echo "Playbook docker_deploy_playbook.yml not found!"
-// //                             exit 1
-// //                         fi
-// //                         """
-// //                     }
-// //                 }
-// //             }
-// //         }
+        stage('Check Ansible Version') {
+            steps {
+                script {
+                    sh """
+                    echo "Printing the current Ansible version:"
+                    ansible --version
+                    """
+                }
+            }
+        }
+        stage('Run Ansible Playbook') {
+            steps {
+                script {
+                    dir('ansible') {
+                        sh """
+                        if [ -f "docker_deploy_playbook.yml" ]; then
+                            echo "Found playbook docker_deploy_playbook.yml"
+
+                            # Run the Ansible playbook
+                            ansible-playbook -i hosts docker_deploy_playbook.yml
+                        else
+                            echo "Playbook docker_deploy_playbook.yml not found!"
+                            exit 1
+                        fi
+                        """
+                    }
+                }
+            }
+        }
 
 
-// //  for windows users
+//  for windows users
 
 
 //         stage('Check and Manage Ansible Container') {
@@ -322,17 +322,17 @@ pipeline {
 //         }
 
     }
-//     post {
-//             success {
-//                 script {
-//                     def instanceUrl = "http://${EC2_PUBLIC_IP}:81"
-//                     echo "The instance is successfully deployed. Access it here: ${instanceUrl}"
-//                 }
-//             }
-//             failure {
-//                 echo "The pipeline failed. Please check the logs for details."
-//             }
-        // }
+    post {
+            success {
+                script {
+                    def instanceUrl = "http://${EC2_PUBLIC_IP}:81"
+                    echo "The instance is successfully deployed. Access it here: ${instanceUrl}"
+                }
+            }
+            failure {
+                echo "The pipeline failed. Please check the logs for details."
+            }
+        }
 }
 
 
