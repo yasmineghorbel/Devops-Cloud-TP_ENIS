@@ -12,9 +12,6 @@
         timeout: 100
         search_regex: OpenSSH
         host: "{{ ansible_host | default(inventory_hostname) }}"
-      vars:
-        ansible_connection: local
-        become: no
 
 - name: Install Docker and Docker-compose
   hosts: servers
