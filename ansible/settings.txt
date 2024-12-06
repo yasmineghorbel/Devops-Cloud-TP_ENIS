@@ -1,0 +1,4 @@
+root: C:\Users\yasmi\Desktop\ansible 
+path: C:\Program Files\nodejs 
+arch: 64 
+proxy: none
