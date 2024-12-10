@@ -24,77 +24,39 @@ pipeline {
                     //      // Apply Terraform configuration
                     //      bat "terraform apply --auto-approve"
                     //  }
-                    //  dir('my-terraform-project') {
-                    //      // Initialize Terraform
-                    //      bat "terraform init"
-                    //      bat "terraform plan -lock=false"
+                     dir('my-terraform-project') {
+                         // Initialize Terraform
+                         bat "terraform init"
+                         bat "terraform plan -lock=false"
 
-                    //      // Apply Terraform configuration
-                    //      bat "terraform apply -lock=false --auto-approve"
+                         // Apply Terraform configuration
+                         bat "terraform apply -lock=false --auto-approve"
 
-                    //      // Get EC2 Public IP
-                    //      EC2_PUBLIC_IP = bat(
-                    //          script: 'terraform output instance_details | findstr "instance_public_ip" | findstr \'{print $3}\' | tr -d \'"\'',
-                    //          returnStdout: true
-                    //      ).trim()
+                         // Get EC2 Public IP
+                         EC2_PUBLIC_IP = bat(
+                             script: 'terraform output instance_details | findstr "instance_public_ip" | findstr \'{print $3}\' | tr -d \'"\'',
+                             returnStdout: true
+                         ).trim()
 
-                    //      // Get RDS Endpoint
-                    //      RDS_ENDPOINT = bat(
-                    //          script: '''
-                    //          terraform output rds_endpoint | findstr "endpoint" | findstr -F'=' '{print $2}' | tr -d '[:space:]"' | sed 's/:3306//'
-                    //          ''',
-                    //          returnStdout: true
-                    //      ).trim()
+                         // Get RDS Endpoint
+                         RDS_ENDPOINT = bat(
+                             script: '''
+                                terraform output rds_endpoint | powershell -Command {$input -match "endpoint=(.+):3306" | Out-Null Write-Output $matches[1]}
+                             ''',
+                             returnStdout: true
+                         ).trim()
 
 
-                    //     DEPLOYER_KEY_URI = bat(
-                    //          script: 'terraform output deployer_key_s3_uri | tr -d \'"\'',
-                    //          returnStdout: true
-                    //      ).trim()
+                        DEPLOYER_KEY_URI = bat(
+                             script: 'terraform output deployer_key_s3_uri | powershell -Command { $input | ForEach-Object { $_ -replace '"', '' -replace "'", '' }}',
+                             returnStdout: true
+                         ).trim()
 
-                    //      // Debugging: Print captured values
-                    //      echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
-                    //      echo "RDS Endpoint: ${RDS_ENDPOINT}"
-                    //      echo "Deployer Key URI: ${DEPLOYER_KEY_URI}"
-                    //  }
-                    dir('my-terraform-project') {
-                    // Initialize Terraform
-                    bat "terraform init"
-                    bat "terraform plan -lock=false"
-
-                    // Apply Terraform configuration
-                    bat "terraform apply -lock=false --auto-approve"
-
-                    // Get EC2 Public IP
-                    EC2_PUBLIC_IP = bat(
-                        script: '''
-                        terraform output instance_details | findstr "instance_public_ip" | powershell -Command "$input | ForEach-Object { $_ -replace '\"', '' }"
-                        ''',
-                        returnStdout: true
-                    ).trim()
-
-                    // Get RDS Endpoint
-                    RDS_ENDPOINT = bat(
-                        script: '''
-                        terraform output rds_endpoint | findstr "endpoint" | powershell -Command "$input | ForEach-Object { $_ -replace ':3306', '' -replace '\"', '' }"
-                        ''',
-                        returnStdout: true
-                    ).trim()
-
-                    // Get Deployer Key URI
-                    DEPLOYER_KEY_URI = bat(
-                        script: '''
-                        terraform output deployer_key_s3_uri | powershell -Command "$input | ForEach-Object { $_ -replace '\"', '' }"
-                        ''',
-                        returnStdout: true
-                    ).trim()
-
-                    // Debugging: Print captured values
-                    echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
-                    echo "RDS Endpoint: ${RDS_ENDPOINT}"
-                    echo "Deployer Key URI: ${DEPLOYER_KEY_URI}"
-                }
-
+                         // Debugging: Print captured values
+                         echo "EC2 Public IP: ${EC2_PUBLIC_IP}"
+                         echo "RDS Endpoint: ${RDS_ENDPOINT}"
+                         echo "Deployer Key URI: ${DEPLOYER_KEY_URI}"
+                     }
                  }
              }
          }
