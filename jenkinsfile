@@ -27,7 +27,7 @@ pipeline {
                         bat "terraform apply -lock=false --auto-approve"
 
                         // Get EC2 Public IP
-                        EC2_PUBLIC_IP = powershell(script: '''
+                        EC2_PUBLIC_IP = bat(script: '''
                             $output = terraform output instance_details
                             $instanceDetails = $output | Select-String -Pattern "instance_public_ip" | ForEach-Object { $_.Line }
                             $instanceDetails.Split(" ")[2].Trim('""')
