@@ -33,10 +33,14 @@ pipeline {
                          bat "terraform apply -lock=false --auto-approve"
 
                          // Get EC2 Public IP
-                         EC2_PUBLIC_IP = bat(
-                             script: 'terraform output instance_details | findstr "instance_public_ip" | findstr \'{print $3}\' | tr -d \'"\'',
-                             returnStdout: true
-                         ).trim()
+                        EC2_PUBLIC_IP = bat(
+                            script: '''terraform output instance_details | findstr "instance_public_ip" | powershell -Command {
+                                $input = Get-Content -
+                                $input -match "instance_public_ip" | ForEach-Object { ($_ -split ":")[1] -replace '"', '' -replace ',', '' }
+                            }''',
+                            returnStdout: true
+                        ).trim()
+
 
                          // Get RDS Endpoint
                          RDS_ENDPOINT = bat(
