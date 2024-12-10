@@ -21,8 +21,8 @@ pipeline {
                 script {
                     dir('my-terraform-project') {
                         // Initialize Terraform
-                        bat 'wsl -d Ubuntu-22.04 terraform init -migrate-state'
-                        bat 'wsl -d Ubuntu-22.04 terraform plan -lock=false'
+                        // bat 'wsl -d Ubuntu-22.04 terraform init'
+                        // bat 'wsl -d Ubuntu-22.04 terraform plan -lock=false'
 
                         // Apply Terraform configuration
                         bat 'wsl -d Ubuntu-22.04 terraform apply -lock=false --auto-approve'
