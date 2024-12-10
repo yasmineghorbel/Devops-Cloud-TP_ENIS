@@ -6,12 +6,12 @@ pipeline {
     environment {
             AWS_ACCESS_KEY_ID = credentials('jenkins_aws_access_key_id')
             AWS_SECRET_ACCESS_KEY = credentials('jenkins_aws_secret_access_key')
-            AWS_CREDENTIALS_ID = 'awscridentalforjenkins'
+            AWS_CREDENTIALS_ID = 'aws-credentials'
             ECR_REPO_URL = '307946682088.dkr.ecr.us-east-1.amazonaws.com'
-            ECR_REPO_NAME = 'enis-app'
+            ECR_REPO_NAME = 'test'
             IMAGE_REPO = "${ECR_REPO_URL}/${ECR_REPO_NAME}"
-            IMAGE_REPO_FRONTEND = "${IMAGE_REPO}:frontend-app-1.0"
-            IMAGE_REPO_BACKEND = "${IMAGE_REPO}:backend-app-1.0"
+            IMAGE_REPO_FRONTEND = "${IMAGE_REPO}:frontend-1.0"
+            IMAGE_REPO_BACKEND = "${IMAGE_REPO}:backend-1.0"
             AWS_REGION = "us-east-1"
 
         }
@@ -19,7 +19,7 @@ pipeline {
          stage('Provision Server and Database') {
              steps {
                  script {
-                     dir('my-terraform-project/remote-backend') {
+                     dir('my-terraform-project/remote_backend') {
                          sh "terraform init"
                          // Apply Terraform configuration
                          sh "terraform apply --auto-approve"
@@ -208,35 +208,35 @@ pipeline {
 
 //  for linux users
 
-        // stage('Check Ansible Version') {
-        //     steps {
-        //         script {
-        //             sh """
-        //             echo "Printing the current Ansible version:"
-        //             ansible --version
-        //             """
-        //         }
-        //     }
-        // }
-        // stage('Run Ansible Playbook') {
-        //     steps {
-        //         script {
-        //             dir('ansible') {
-        //                 sh """
-        //                 if [ -f "docker_deploy_playbook.yml" ]; then
-        //                     echo "Found playbook docker_deploy_playbook.yml"
-
-        //                     # Run the Ansible playbook
-        //                     ansible-playbook -i hosts docker_deploy_playbook.yml
-        //                 else
-        //                     echo "Playbook docker_deploy_playbook.yml not found!"
-        //                     exit 1
-        //                 fi
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
+//         stage('Check Ansible Version') {
+//             steps {
+//                 script {
+//                     sh """
+//                     echo "Printing the current Ansible version:"
+//                     ansible --version
+//                     """
+//                 }
+//             }
+//         }
+//         stage('Run Ansible Playbook') {
+//             steps {
+//                 script {
+//                     dir('ansible') {
+//                         sh """
+//                         if [ -f "docker_deploy_playbook.yml" ]; then
+//                             echo "Found playbook docker_deploy_playbook.yml"
+//
+//                             # Run the Ansible playbook
+//                             ansible-playbook -i hosts docker_deploy_playbook.yml
+//                         else
+//                             echo "Playbook docker_deploy_playbook.yml not found!"
+//                             exit 1
+//                         fi
+//                         """
+//                     }
+//                 }
+//             }
+//         }
 
 
 //  for windows users
@@ -334,6 +334,5 @@ pipeline {
             }
         }
 }
-
 
 
