@@ -239,7 +239,7 @@ pipeline {
         // }
 
 
- for windows users
+//  for windows users
 
 
         stage('Check and Manage Ansible Container') {
