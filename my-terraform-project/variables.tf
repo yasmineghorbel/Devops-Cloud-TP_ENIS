@@ -1,10 +1,10 @@
+# VPC CIDR Block
 variable "vpc_cidr_block" {
   description = "The CIDR block for the VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 # Public Subnet 1 CIDR Block
-
 variable "public_subnet_1_cidr" {
   description = "CIDR block for public subnet 1"
   type        = string
@@ -28,9 +28,8 @@ variable "availability_zone_2" {
   type        = string
   default     = "us-east-1b"
 }
+
 # SSH Key Name
-
-
 variable "ssh_key_name" {
   description = "The name of the SSH key pair to be created"
   type        = string

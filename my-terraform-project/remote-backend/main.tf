@@ -1,3 +1,4 @@
+# Terraform block specifying required providers
 terraform {
   required_providers {
     aws = {
@@ -21,18 +22,23 @@ terraform {
     encrypt        = true                                            # Enables encryption for the state file
   }
 }
+
+# AWS provider configuration
 provider "aws" {
   region = "us-east-1"
-
-
 }
+
+# Generate a random suffix for the S3 bucket name to ensure uniqueness
 resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
+
+# S3 bucket for storing Terraform state
 resource "aws_s3_bucket" "terraform_state" {
   bucket        = "${var.s3_bucket_name}-${random_id.bucket_suffix.hex}"
   force_destroy = true
 }
+
 # Enable versioning for the S3 bucket
 resource "aws_s3_bucket_versioning" "terraform_bucket_versioning" {
   bucket = aws_s3_bucket.terraform_state.id
@@ -50,6 +56,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_c
     }
   }
 }
+
 # DynamoDB table for state locking
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.dynamodb_table_name

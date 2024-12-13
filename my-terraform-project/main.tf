@@ -1,12 +1,15 @@
+# Terraform block specifying required providers
 terraform {
   backend "s3" {
-    bucket         = "custom-terraform-state-bucket-123456-4b50f5d0" # Replace with your S3 bucket name
+    bucket         = "custom-terraform-state-bucket-123456-1c13b9b9" # Replace with your S3 bucket name
     key            = "aws-backend/main/terraform.tfstate"            # Location of the state file in the bucket
     region         = "us-east-1"                                     # AWS region
     dynamodb_table = "custom-terraform-state-locks-123456"           # Replace with your DynamoDB table name
     encrypt        = true                                            # Enables encryption for the state file
   }
 }
+
+# VPC Creation (aws_vpc):
 resource "aws_vpc" "tp_cloud_devops_vpc" {
   cidr_block           = var.vpc_cidr_block # Using variable for VPC CIDR
   enable_dns_support   = true
@@ -15,6 +18,8 @@ resource "aws_vpc" "tp_cloud_devops_vpc" {
     Name = "tp_cloud_devops_vpc"
   }
 }
+
+# Subnet Creation (aws_subnet for public_subnet_1):
 resource "aws_subnet" "public_subnet_1" {
   vpc_id                  = aws_vpc.tp_cloud_devops_vpc.id
   cidr_block              = var.public_subnet_1_cidr
@@ -24,6 +29,8 @@ resource "aws_subnet" "public_subnet_1" {
     Name = "PublicSubnet1"
   }
 }
+
+# Subnet Creation (aws_subnet for public_subnet_2):
 resource "aws_subnet" "public_subnet_2" {
   vpc_id                  = aws_vpc.tp_cloud_devops_vpc.id
   cidr_block              = var.public_subnet_2_cidr
@@ -33,23 +40,28 @@ resource "aws_subnet" "public_subnet_2" {
     Name = "PublicSubnet2"
   }
 }
+
+# Internet Gateway Creation (aws_internet_gateway):
 resource "aws_internet_gateway" "main_gateway" {
   vpc_id = aws_vpc.tp_cloud_devops_vpc.id
   tags = {
     Name = "MainInternetGateway"
   }
 }
+
+# Route Table Creation (aws_route_table):
 resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.tp_cloud_devops_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.main_gateway.id
-
   }
   tags = {
     Name = "PublicRouteTable"
   }
 }
+
+# Route Table Association (aws_route_table_association for public_rta1 and public_rta2):
 resource "aws_route_table_association" "public_rta1" {
   subnet_id      = aws_subnet.public_subnet_1.id
   route_table_id = aws_route_table.public_route_table.id
@@ -58,21 +70,28 @@ resource "aws_route_table_association" "public_rta2" {
   subnet_id      = aws_subnet.public_subnet_2.id
   route_table_id = aws_route_table.public_route_table.id
 }
+
+# Generate an SSH key pair using TLS provider
 resource "tls_private_key" "example_ssh_key" {
   algorithm = "RSA"
   rsa_bits  = 2048
 }
+
+# Create an AWS Key Pair using the public key from the TLS private key
 resource "aws_key_pair" "deployer_key" {
   key_name   = var.ssh_key_name
   public_key = tls_private_key.example_ssh_key.public_key_openssh
 }
+
+# Upload the private key to the S3 bucket
 resource "aws_s3_object" "private_key_object" {
   bucket                 = "custom-terraform-state-bucket-123456-4b50f5d0" # Reference existing S3 bucket
-  key                    = "${var.ssh_key_name}.pem"                       # Use the same name as the key(with .pem extension)
+  key                    = "${var.ssh_key_name}.pem"                       # Use the same name as the key (with .pem extension)
   content                = tls_private_key.example_ssh_key.private_key_pem
   acl                    = "private"
   server_side_encryption = "AES256"
 }
+
 # Create a Security Group for the web server and SSH access
 resource "aws_security_group" "web_sg" {
   name        = "web-server-sg"
@@ -115,61 +134,7 @@ resource "aws_security_group_rule" "allow_all_outbound" {
   protocol          = "-1" # "-1" means all protocols
   cidr_blocks       = ["0.0.0.0/0"]
 }
-# Launch an EC2 instance in the public subnet with the generated key pair andsecurity group
-
-# Create a DB subnet group
-resource "aws_db_subnet_group" "mydb_subnet_group" {
-  name       = "mydb_subnet_group"
-  subnet_ids = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
-  tags = {
-    Name = "mydb_subnet_group"
-  }
-}
-
-# Create an RDS MySQL database instance
-resource "aws_db_instance" "mydb" {
-  allocated_storage      = 20 # Minimum storage size for MySQL
-  engine                 = "mysql"
-  engine_version         = "8.0.35"
-  instance_class         = "db.t3.micro" # Free-tier eligible instance type
-  identifier             = "mydb"
-  username               = "dbuser"         # Master username
-  password               = "DBpassword2024" # Master password
-  db_subnet_group_name   = aws_db_subnet_group.mydb_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
-  publicly_accessible    = true  # Restrict public access
-  multi_az               = false # Single-AZ deployment
-  skip_final_snapshot    = true  # Skip snapshot on deletion
-  tags = {
-    Name = "enis_tp"
-  }
-}
-resource "aws_security_group_rule" "allow_rds_inbound" {
-  type              = "ingress"
-  security_group_id = aws_security_group.web_sg.id
-  from_port         = 3306 # Change this to match yourdatabase port
-  to_port           = 3306 # Same as above
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"] # For production, replacethis with a specific IP or CIDR block
-}
-# Allow inbound to backend on port 8000
-resource "aws_security_group_rule" "allow_backend_inbound" {
-  type              = "ingress"
-  security_group_id = aws_security_group.web_sg.id
-  from_port         = 8000
-  to_port           = 8000 # Same as above
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"] # For production, replacethis with a specific IP or CIDR block
-}
-# Allow inbound HTTP traffic on port 81 to access the final application
-resource "aws_security_group_rule" "allow_web_http_inbound-81" {
-  type              = "ingress"
-  security_group_id = aws_security_group.web_sg.id
-  from_port         = 81
-  to_port           = 81
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
+# IAM Role for EC2 to access ECR
 resource "aws_iam_role" "ec2_ecr_access_role" {
   name = "ec2-ecr-access-role"
 
@@ -217,5 +182,61 @@ resource "aws_instance" "public_instance" {
 
   tags = {
     Name = "PublicInstance"
+  }
+}
+
+# Allow inbound RDS traffic (e.g., MySQL on port 3306)
+resource "aws_security_group_rule" "allow_rds_inbound" {
+  type              = "ingress"
+  security_group_id = aws_security_group.web_sg.id
+  from_port         = 3306 # Change this to match your database port
+  to_port           = 3306 # Same as above
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"] # For production, replace this with a specific IP or CIDR block
+}
+# Allow inbound to backend on port 8000
+resource "aws_security_group_rule" "allow_backend_inbound" {
+  type              = "ingress"
+  security_group_id = aws_security_group.web_sg.id
+  from_port         = 8000
+  to_port           = 8000 # Same as above
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"] # For production, replace this with a specific IP or CIDR block
+}
+# Allow inbound HTTP traffic on port 81 to access the final application
+resource "aws_security_group_rule" "allow_web_http_inbound-81" {
+  type              = "ingress"
+  security_group_id = aws_security_group.web_sg.id
+  from_port         = 81
+  to_port           = 81
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+# Create a DB subnet group
+resource "aws_db_subnet_group" "mydb_subnet_group" {
+  name       = "mydb_subnet_group"
+  subnet_ids = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
+  tags = {
+    Name = "mydb_subnet_group"
+  }
+}
+
+# Create an RDS MySQL database instance
+resource "aws_db_instance" "mydb" {
+  allocated_storage      = 20 # Minimum storage size for MySQL
+  engine                 = "mysql"
+  engine_version         = "8.0.35"      # Specify the MySQL engine version
+  instance_class         = "db.t3.micro" # Free-tier eligible instance type
+  identifier             = "mydb"
+  username               = "dbuser"         # Master username
+  password               = "DBpassword2024" # Master password
+  db_subnet_group_name   = aws_db_subnet_group.mydb_subnet_group.name
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  publicly_accessible    = true  # Restrict public access
+  multi_az               = false # Single-AZ deployment
+  skip_final_snapshot    = true  # Skip snapshot on deletion
+  tags = {
+    Name = "enis_tp"
   }
 }
