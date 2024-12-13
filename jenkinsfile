@@ -113,7 +113,15 @@ pipeline {
         }
 
 
-
+    stages {
+            stage('Test Docker Access') {
+                steps {
+                    script {
+                        sh 'docker info'  // Cette commande doit afficher des informations sur Docker
+                    }
+                }
+            }
+        }
 
         stage('Build Frontend Docker Image') {
             steps {
