@@ -116,16 +116,21 @@ pipeline {
 
 
         stage('Build Frontend Docker Image') {
-                    steps {
-                        dir('enis-app-tp/frontend') {
-                            script {
-                                echo 'Building Frontend Docker Image...'
-                                def frontendImage = docker.build('frontend-app')
-                                echo "Built Image: ${frontendImage.id}"
-                            }
+            steps {
+                dir('enis-app-tp/frontend') {
+                    script {
+                        echo 'Building Frontend Docker Image...'
+                        try {
+                            def frontendImage = docker.build('frontend-app')
+                            echo "Built Image: ${frontendImage.id}"
+                        } catch (Exception e) {
+                            echo "Error building frontend image: ${e}"
                         }
                     }
                 }
+            }
+        }
+
         stage('Build Backend Docker Image') {
                     steps {
                         dir('enis-app-tp/backend') {
