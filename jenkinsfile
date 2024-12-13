@@ -25,7 +25,7 @@ pipeline {
                     //  }
                      dir('my-terraform-project') {
                          // Initialize Terraform
-                         sh "terraform init"
+                         sh "terraform init -reconfigure"
                          sh "terraform plan -lock=false"
 
                          // Apply Terraform configuration
