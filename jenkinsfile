@@ -113,7 +113,6 @@ pipeline {
         }
 
 
-    stages {
             stage('Test Docker Access') {
                 steps {
                     script {
@@ -121,7 +120,7 @@ pipeline {
                     }
                 }
             }
-        }
+    
 
         stage('Build Frontend Docker Image') {
             steps {
