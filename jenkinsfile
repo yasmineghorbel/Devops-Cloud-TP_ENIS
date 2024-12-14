@@ -18,7 +18,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm  // Clone le repository Git
+                script {
+                    // Forcer l'utilisation de Git avec le chemin explicite
+                    sh "${env.GIT_EXECUTABLE} clone https://github.com/yasmineghorbel/Devops-Cloud-TP_ENIS.git"
+                }
             }
         }
          stage('Provision Server and Database') {
