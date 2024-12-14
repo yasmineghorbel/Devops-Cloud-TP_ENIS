@@ -17,10 +17,6 @@ pipeline {
     stages {
          stage('Provision Server and Database') {
              steps {
-                git(
-                    url: 'https://github.com/yasmineghorbel/Devops-Cloud-TP_ENIS.git',
-                    credentialsId: 'githubtoken'  // Ensure this matches your credentials ID
-                )
                  script {
                      dir('my-terraform-project/remote-backend') {
                          sh "terraform init"
