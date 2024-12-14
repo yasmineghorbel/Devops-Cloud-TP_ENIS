@@ -15,6 +15,11 @@ pipeline {
             AWS_REGION = "us-east-1"
         }
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm  // Clone le repository Git
+            }
+        }
          stage('Provision Server and Database') {
              steps {
                  script {
