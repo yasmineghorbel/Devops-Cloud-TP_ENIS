@@ -4,7 +4,6 @@ def DEPLOYER_KEY_URI = ""
 pipeline {
     agent {label 'wsl'} 
     environment {
-            GIT_SSH_COMMAND = 'ssh -v -i ${HOME}/.ssh/id_rsa -o StrictHostKeyChecking=no'  // Enable SSH debug logging
             AWS_ACCESS_KEY_ID = credentials('jenkins_aws_access_key_id')
             AWS_SECRET_ACCESS_KEY = credentials('jenkins_aws_secret_access_key')
             AWS_CREDENTIALS_ID = 'aws-credentials'
